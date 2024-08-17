@@ -1,9 +1,33 @@
-<head>
-    HELLO
-</head>
-<div id="start">
-    BYE</div>
+<!-- 
+ INITIAL LOGIC
+ Many vertical strips in a box
+ Each vertical strip has three parts (sky,wall,floor)
+ Key stroke will make the part heights of each strip recalculate
+ -->
+ <head>
+    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAuCAYAAAC4e0AJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAADmSURBVGhD7Y7RCsQwCATz/z/dk30ox6Ky9dKQcA7oS6Z1xnUwd/wY46hBM7bhCTsPmrENT9h50Ixt8MOOcGPHr4IbO34V3Njxq+BGN/6Nyah6Ha9MRtXL7R/hYxFVr+Mj+FhE1ev4CD4WUfU6PoKPRVS92/5+eDIZb3sdHzHbY9z4Waj/VD2m4yPUf6oe0/ER6j9Vj+n4CPWfqsf8X7zqVjx18B22wQ8Zqlvx1MF32AY/ZKhuxVMH32Eb/JDxxJ0J3+34VfDdjl8F3+34VfBdN/6EQTO24Qk7D5qxDU/YedCMfSTX9QEHyC4yxtPZHgAAAABJRU5ErkJggg=="/>
+ </head>
+<body style="background-color:grey;">
+
+<div id="container" style="margin: auto; width: 50%; height: 80%;">
+
+    <div id="strip0" style="float: left; width: 1.6666667%; height: 100%; background: powderblue;">
+        B
+    </div>
+
+</div>
+
 <script>
-    let v = 100
-    document.getElementById('start').style.background="red";
+    
+    for (let i = 1; i < 60 ; i++){
+
+    var currentStrip = document.querySelector('#strip0');
+    var clonedStrip = currentStrip.cloneNode(true);
+
+    clonedStrip.id = 'strip'+ (60-i) ;
+    currentStrip.after(clonedStrip)
+    }
+
 </script>
+
+</body>
