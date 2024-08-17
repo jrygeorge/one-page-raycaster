@@ -4,29 +4,55 @@
  Each vertical strip has three parts (sky,wall,floor)
  Key stroke will make the part heights of each strip recalculate
  -->
- <head>
-    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAuCAYAAAC4e0AJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAADmSURBVGhD7Y7RCsQwCATz/z/dk30ox6Ky9dKQcA7oS6Z1xnUwd/wY46hBM7bhCTsPmrENT9h50Ixt8MOOcGPHr4IbO34V3Njxq+BGN/6Nyah6Ha9MRtXL7R/hYxFVr+Mj+FhE1ev4CD4WUfU6PoKPRVS92/5+eDIZb3sdHzHbY9z4Waj/VD2m4yPUf6oe0/ER6j9Vj+n4CPWfqsf8X7zqVjx18B22wQ8Zqlvx1MF32AY/ZKhuxVMH32Eb/JDxxJ0J3+34VfDdjl8F3+34VfBdN/6EQTO24Qk7D5qxDU/YedCMfSTX9QEHyC4yxtPZHgAAAABJRU5ErkJggg=="/>
- </head>
+
+<head>
+<link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAAJISURBVEhLtZa9rjlBFMAPlviKIISSR1BoZNU0IuEBFErxAArRK4RGwSuIghdQKRUSUUmEggSREB+Jj/nPmZ31Xxc33Lv3l5zMztmZPTPnnDmzmuv1ShqNBux2O6DPoBYajYaJKIoA5/OZWCwWQvV/ItVqlWjQiNPphEAgAKVSierVYTweQzKZhHq9Lu3EZDKRRCJB1GQymbCd1Go1opXsgqrxQDDGMsyITqeD4/EIy+XyLVmv12yyzOFwYHrqFa75ArrLbDY/BOyV4NhwOMydIlGpVIjNZiODwYBrCBkOh2w8ukvANMtms9+vREGz2YT5fM57Evv9Hjabzev53PDbBINB4vP5eE+iWCyyVff7fa6538kt8O+Cq8Xdf8LHRn6CgKmbz+dhtVo99WksFoN4PM5773O5XFiLWStQ90G5XGbBe4bb7f6REY/HA4VCAUKhkJTCVquVRCIRMpvNHmS73UqR5NDyQ/x+P+9JPAu8EhYT3BotLeD1eh+ELgCH/ApmBLNF7bKiRNXsstvt/OkegbcPYLblcjmIRqNAKzTXApxOJyZKZC9kMhnAawNB7+j1ekilUq+NYJnAu8BoNN4ZwdV+PYz00gNau6DdbnPNf/CeeukurVZ6hR9Q0mq1oNPp8J5EOp2G0WgEi8XiJt1ul70TBOHzmDgcjptLZDAzXS7XneA5kWFGaCozi0rkHRgMBtZ+CsZDhn0ZFRjoXq/HlAg9iKydTqd3+nfBOx5h8cMT/+d/KzT9nv534QpQ0JUonyLPF0UR/gGMYUuO6AKrGQAAAABJRU5ErkJggg=="/>
+</head>
+
 <body style="background-color:grey;">
-
 <div id="container" style="margin: auto; width: 50%; height: 80%;">
-
-    <div id="strip0" style="float: left; width: 1.6666667%; height: 100%; background: powderblue;">
-        B
+    <div id="strip0" style="float: left; width: 100%; height: 100%;">
+        <div id="sky" style="width: 100%; height: calc(100% / 3); background: powderblue;"> </div>
+        <div id="wall" style="width: 100%; height: calc(100% / 3); background: rgb(230, 200, 176);"> </div>
+        <div id="ground" style="width: 100%; height: calc(100% / 3); background: rgb(176, 230, 182);"> </div>
     </div>
-
 </div>
 
 <script>
-    
-    for (let i = 1; i < 60 ; i++){
 
-    var currentStrip = document.querySelector('#strip0');
-    var clonedStrip = currentStrip.cloneNode(true);
+function generateStrips(){
+    for (let i = 1; i < stripNumber ; i++){
 
-    clonedStrip.id = 'strip'+ (60-i) ;
+    let currentStrip = document.querySelector('#strip0');
+    let clonedStrip = currentStrip.cloneNode(true);
+
+    clonedStrip.id = 'strip'+ (stripNumber-i) ;
     currentStrip.after(clonedStrip)
     }
+}
+
+const stripNumber = 60 // 60 strips for 60deg FOV
+document.getElementById("strip0").style.width = "calc(100% /"+stripNumber+")"
+
+generateStrips()
+
+document.addEventListener('keydown', function(event){
+    console.log(event)
+    for (let i=0; i<stripNumber; i++){
+        let stripName = "strip" + i
+        let wallDiv = document.querySelector("#"+stripName+" #wall");
+        let skyDiv = document.querySelector("#"+stripName+" #sky")
+        let groundDiv = document.querySelector("#"+stripName+" #ground")
+        let wallHeight = Math.floor(Math.random() * 50) + 25 // 25 to 75 right now
+        let skyGroundHeight = (100 - wallHeight)/2
+        wallDiv.style.height = wallHeight + "%";
+        skyDiv.style.height = skyGroundHeight + "%";
+        groundDiv.style.height = skyGroundHeight + "%";
+    }
+}
+
+);
+
 
 </script>
 
