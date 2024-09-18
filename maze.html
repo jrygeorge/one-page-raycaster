@@ -1,15 +1,24 @@
 <head>
-    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAAJISURBVEhLtZa9rjlBFMAPlviKIISSR1BoZNU0IuEBFErxAArRK4RGwSuIghdQKRUSUUmEggSREB+Jj/nPmZ31Xxc33Lv3l5zMztmZPTPnnDmzmuv1ShqNBux2O6DPoBYajYaJKIoA5/OZWCwWQvV/ItVqlWjQiNPphEAgAKVSierVYTweQzKZhHq9Lu3EZDKRRCJB1GQymbCd1Go1opXsgqrxQDDGMsyITqeD4/EIy+XyLVmv12yyzOFwYHrqFa75ArrLbDY/BOyV4NhwOMydIlGpVIjNZiODwYBrCBkOh2w8ukvANMtms9+vREGz2YT5fM57Evv9Hjabzev53PDbBINB4vP5eE+iWCyyVff7fa6538kt8O+Cq8Xdf8LHRn6CgKmbz+dhtVo99WksFoN4PM5773O5XFiLWStQ90G5XGbBe4bb7f6REY/HA4VCAUKhkJTCVquVRCIRMpvNHmS73UqR5NDyQ/x+P+9JPAu8EhYT3BotLeD1eh+ELgCH/ApmBLNF7bKiRNXsstvt/OkegbcPYLblcjmIRqNAKzTXApxOJyZKZC9kMhnAawNB7+j1ekilUq+NYJnAu8BoNN4ZwdV+PYz00gNau6DdbnPNf/CeeukurVZ6hR9Q0mq1oNPp8J5EOp2G0WgEi8XiJt1ul70TBOHzmDgcjptLZDAzXS7XneA5kWFGaCozi0rkHRgMBtZ+CsZDhn0ZFRjoXq/HlAg9iKydTqd3+nfBOx5h8cMT/+d/KzT9nv534QpQ0JUonyLPF0UR/gGMYUuO6AKrGQAAAABJRU5ErkJggg=="/>
+    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACSSURBVEhLY6xZ8+I/A40BE5SmKRi1hCRAlYjPkjkBZWEHFPskim8PlIUbUGRJMMc2KAs/INsS51+roCzCgHFhTzVZcSInJc4gwMfDwM7GBqbxgeGThEctIQmMWkISoIsljOr1hmTl+BnqibTP8Rk350NZhAFFwRVxejKUhR9QHCeBR3uhLNyA7DghBdAhdTEwAAAjyRl/u18AXgAAAABJRU5ErkJggg=="/>
+    <title> &lt Maze Escape &gt by jrygeorge </title>
     <style>
-        h2 {
+        h1 {
             font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
             text-align: center;
             color: antiquewhite;
+            margin: 5px;
+        }
+        h3 {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            text-align: center;
+            color: antiquewhite;
+            margin: 10px;
         }
         h4 {
             font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
             text-align: center;
-            color: antiquewhite;
+            color: rgb(2, 34, 37);
+            margin: 3px;
         }
         .stripPart{
             width: 100%;
@@ -27,8 +36,8 @@
     </style>
 </head>
 
-<body style="background-color:rgb(61, 61, 61);">
-<div id="container" style="margin: auto; width: 50%; height: 80%; border:2px solid black; background: black;">
+<body style="background-color:rgb(2, 73, 80);">
+<div id="container" style="margin: auto; width: 50%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
     <div id="strip0" style="float: left; width: 100%; height: 100%;">
         <div class="stripPart sky" id="sky"> </div>
         <div class="stripPart wall" id="wall"> </div>
@@ -36,13 +45,25 @@
     </div>
 </div>
 
-<h2> 
-   &lt Maze Escape &gt <br>
-    WASD to move <br>
-</h2>
-<h4>made by jerry g :)</h4>
+<h1> 
+   &lt Maze Escape &gt
+</h1> 
+<h3>
+    AD or ←→ to look around <br>
+    WS or ↑↓ to move 
+</h3>
+<h4>
+    made by jrygeorge :)
+</h4>
 
 <script>
+
+function canBeMovedTo(newX, newY){
+    let coX = Math.floor(newX/blockSize)
+    let coY = Math.floor(newY/blockSize)
+    if (map[coY][coX] == 1){return false}
+    return true
+}
 
 function generateStrips(){
     //document.querySelector('#strip0').style.height = "100%"
@@ -66,13 +87,63 @@ function updateStrips(){
     }
 }
 
-const stripNumber = 60 // 60 strips for 60deg FOV
+// SET THESE CONSTANTS NICELY SO THERES NO REMAINDER
+// I COULD USE FLOOR BUT THEN THERE MIGHT BE OTHER THINGS TO ADJUST
+const FOV = 60 // field of vision in degrees
+const degreesPerStrip = 1 // smaller value -> strip is thinner -> sharper image
+const stripNumber = FOV / degreesPerStrip // this is the number of rays
 document.getElementById("strip0").style.width = "calc(100% /"+stripNumber+")"
 
+let PI = 3.141592
+let playerPosition = [150,150] // starting location, [0,0] is top-left
+let playerAngle = PI/2 // starting angle, 0 is facing East
+let blockSize = 50 // width and height of a "block" in the map
+
+let map = [
+            [1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1],
+            [1,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1]
+        ]
+
 document.addEventListener('keydown', function(event){
-    if (["ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
-        updateStrips()
+//console.log(event.key)
+    if (["a","ArrowLeft"].includes(event.key)){
+        // rotates by PI/10 clockwise
+        playerAngle = (playerAngle + PI/10)%(2*PI)
     }
+    if (["d","ArrowRight"].includes(event.key)){
+        playerAngle = (playerAngle -PI/10 + 2*PI)%(2*PI)
+    }
+    if (["w","ArrowUp"].includes(event.key)){
+        // finds distance moved in x and y direction, and rounds to ONE decimal place
+        futureX = playerPosition[0] + Math.round(10* 20*Math.cos(playerAngle))/10
+        futureY = playerPosition[1] + Math.round(10* 20*Math.sin(playerAngle))/10
+        if (canBeMovedTo(futureX,futureY)){
+            playerPosition[0] = futureX
+            playerPosition[1] = futureY
+        }
+        else {console.log("HIT BOUNDARY")}
+    }
+    if (["s","ArrowDown"].includes(event.key)){
+        futureX = playerPosition[0] - Math.round(10* 20*Math.cos(playerAngle))/10
+        futureY = playerPosition[1] - Math.round(10* 20*Math.sin(playerAngle))/10
+        if (canBeMovedTo(futureX,futureY)){
+            playerPosition[0] = futureX
+            playerPosition[1] = futureY
+        }
+        else {console.log("HIT BOUNDARY")}
+    }
+    if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
+        updateStrips()
+        console.log("Current playerAngle",playerAngle)
+        console.log("Current playerPos",playerPosition)
+    }
+    // movement check : get current loc, get future loc, get line between the both. if it intersects any "edges" dont move.
+    // if it diesnt intersect, then update point
 } );
 
 window.addEventListener('load', function(event){
