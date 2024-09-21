@@ -3,7 +3,11 @@
 
 Just download `maze.html` and open to play.<br>
 Or download `maze_mechanics.html` to see how the distances are calculated.
+<br><br>
 
+<img src="assets/demo.gif" height="200px">
+
+<br>
  References : 
 
 - <a href="https://youtu.be/TOEi6T2mtHo?si=rA3NX6LXQvBGWnL0">Coding Train - Coding Challenge #145: 2D Raycasting</a></li>
