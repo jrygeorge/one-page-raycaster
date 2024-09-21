@@ -1,0 +1,456 @@
+<head>
+    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACTSURBVEhLY2wOFv/PQGPABKVpCkYtIQlQJeKnPbGAsrADin2y7JMLlIUbUGTJ2h9eUBZ+QLYle9nCoCzCgDGuuIWsOHn07CXDh09fGH7++gWm8YHhk4RHLSEJjFpCEqCLJYw3Gs6RleMzbs6nfY6foZ4IZREGFAXXCtNcKAs/oDhO1lsXQ1m4AdlxQgqgQ+piYAAA4PEsxMxOh0UAAAAASUVORK5CYII="/>
+    <title>Maze Escape (debug) by jrygeorge </title>
+    <style>
+        h1 {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            text-align: center;
+            color: antiquewhite;
+            margin: 5px;
+            text-shadow: 0px 0px 6px rgb(0, 0, 0);
+        }
+        h3 {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            text-align: center;
+            color: antiquewhite;
+            margin: 10px;
+        }
+        h4 {
+            font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            text-align: center;
+            color: rgb(2, 34, 37);
+            margin: 3px;
+        }
+        .stripPart{
+            width: 100%;
+             height: calc(100% / 3);
+        }
+        .sky{
+            background: rgb(124, 172, 232);
+        }
+        .wall{
+            background: rgb(230, 200, 176);
+        }
+        .ground{
+            background: rgb(39, 127, 49);
+        }
+    </style>
+</head>
+
+<body style="background-color:rgb(2, 73, 80);">
+
+    
+<div id="maze" style="width: 50%; height:525px;  float: left;">
+    <canvas id="myCanvas" width="525px" height="525px" style="border:1px solid #000000; box-shadow: 0px 0px 10px rgb(18,18,18); margin-left: 15%;">:(</canvas>
+</div>
+
+<div style="width: 50%; float: right;">
+<div id="casted" style="margin: auto; width: 525px; height: 525px;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
+    <div id="strip0" style="float: left; width: 100%; height: 100%;">
+        <div class="stripPart sky" id="sky"> </div>
+        <div class="stripPart wall" id="wall"> </div>
+        <div class="stripPart ground" id="ground"> </div>
+    </div>
+</div>
+</div>
+<h3 style="align-self: auto;">
+    Horizontal Axis is flipped. <br>
+    Green Boxes show where a ray touches a vertical line/edge.<br>
+    Red Boxes show where a ray touches a horizontal line/edge.<br><br>
+    We're directly using the distance to the edges without any correction when casting,<br>
+    so fisheye effect WILL be present.
+</h5>
+
+
+
+
+<script>
+
+function distanceToPlayer(otherX,otherY){
+    return Math.sqrt((otherX-playerPosition.x)**2 + (otherY-playerPosition.y)**2);
+}
+
+function canBeMovedTo(newX, newY){
+    let coX = Math.floor(newX/blockSize)
+    let coY = Math.floor(newY/blockSize)
+    if (map[coY][coX] == 1){return false}
+    return true
+}
+
+function closestDist(){
+    distances = []
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    for(let ray=0 ; ray<stripNumber ; ray++){
+        /*
+        Ray 0 is at angle : playerAngle + radsPerStrip*(stripNumber/2)
+        Ray N is at angle : playerAngle - radsPerStrip*(stripNumber/2)
+        i.e. Half the strips are on one side, half on the other.
+        */
+        let rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+        //rayAngle = playerAngle
+        //console.log(ray,rayAngle)
+        //rayAngle = (Math.atan(  (((stripNumber-ray)*1600/stripNumber) - 800)/(800/Math.tan(PI/6))  ) + playerAngle + 2*PI)%(2*PI)
+        /*
+        if (ray > 0){
+            a = (playerAngle + radsPerStrip*(stripNumber/2 - ray-1) + 2*PI)%(2*PI);
+            b = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+            console.log(ray,b-a)
+        }*/
+        //console.log(ray,(180/PI)*rayAngle)
+        // rounding down
+        
+        let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
+        let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
+
+        let horizontalDistance = Infinity;
+        let verticalDistance = Infinity;
+        
+        // DISTANCE TO CLOSEST HORIZONTAL EDGE
+        if ( (rayAngle > 0) && (rayAngle < PI) ){ // UP
+            let depth = 30;
+            let offsetY = blockSize;
+            let offsetX = blockSize / Math.tan(rayAngle);
+            let toCheckX = roundX + offsetX;
+            let toCheckY = roundY + offsetY;
+            while (depth > 0){
+
+                mapX = Math.floor(toCheckX / blockSize);
+                mapY = Math.floor(toCheckY / blockSize);
+                if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
+                if (map[mapY][mapX] == 1){
+                    depth = -1;
+                }
+                else{
+
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1;
+                }}
+                else{toCheckX = Infinity;
+                    toCheckY = Infinity;
+                depth = -1}
+            }
+
+            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
+            }
+        if ( (rayAngle > PI) && (rayAngle < 2*PI) ){ // DOWN
+            let depth = 30;
+            let offsetY = - blockSize;
+            let offsetX = - blockSize / Math.tan(rayAngle);
+            let toCheckX = roundX ;//+ offsetX ;
+            let toCheckY = roundY ;//+ offsetY ;
+            while (depth > 0){
+
+                mapX = Math.floor(toCheckX / blockSize);
+                mapY = Math.floor(toCheckY / blockSize)-1;
+                if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
+                if (map[mapY][mapX] == 1){
+                    depth = -1;
+                }
+                else{
+
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -=1 ;
+                }}
+                else{toCheckX = Infinity;
+                    toCheckY = Infinity;
+                depth = -1}
+            }
+
+
+            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
+        }
+        if ( (rayAngle == 0) || (rayAngle == PI) ){
+            toCheckX = Infinity;
+            toCheckY = Infinity;
+            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
+        }
+        
+        // DISTANCE TO CLOSEST VERTICAL EDGE
+
+        roundX = Math.floor( playerPosition.x / blockSize) * blockSize;
+        roundY = playerPosition.y + (-playerPosition.x+ roundX)*Math.tan(rayAngle)
+
+        if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){ // RIGHT
+            let depth = 30;
+            let offsetX = blockSize;
+            let offsetY = blockSize * Math.tan(rayAngle);
+            let toCheckX = roundX + offsetX;
+            let toCheckY = roundY + offsetY;
+            while (depth > 0){
+                mapX = Math.floor(toCheckX  / blockSize);
+                mapY = Math.floor(toCheckY  / blockSize);
+                if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
+                if (map[mapY][mapX] == 1){
+                    depth = -1;
+                }
+                else{
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1;
+                }}
+                else{toCheckX = Infinity;
+                    toCheckY = Infinity;
+                depth = -1}
+            }
+
+            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
+            }
+        if ( (rayAngle < 1.5*PI) && (rayAngle > PI/2) ){ // LEFT
+            let depth = 30;
+            let offsetX = - blockSize;
+            let offsetY = - blockSize * Math.tan(rayAngle);
+            let toCheckX = roundX ;//+ offsetX ;
+            let toCheckY = roundY ;//+ offsetY ;
+            while (depth > 0){
+                mapX = Math.floor(toCheckX / blockSize)-1;
+                mapY = Math.floor(toCheckY / blockSize);
+                if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
+                if (map[mapY][mapX] == 1){
+                    depth = -1;
+                }
+                else{
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1 ;
+                }}
+                else{toCheckX = Infinity;
+                    toCheckY = Infinity;
+                depth = -1}
+            }
+
+            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
+        }
+        if ( (rayAngle == PI/2 ) || (rayAngle == 1.5*PI) ){
+            toCheckX = Infinity;
+            toCheckY = Infinity;
+            
+            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
+        }
+            
+        fishCorrection =1; Math.cos( (playerAngle - rayAngle + 2*PI )%(2*PI) );
+        if (horizontalDistance < verticalDistance)
+        {//updateSingleStrip(ray,horizontalDistance * fishCorrection,"H" )
+        distances.push([horizontalDistance*fishCorrection,verticalDistance*fishCorrection,"H"]);}
+        else
+        {//updateSingleStrip(ray,verticalDistance * fishCorrection,"V" )
+        distances.push([horizontalDistance*fishCorrection,verticalDistance*fishCorrection,"V"]);
+        }
+
+        //mini = Math.min(verticalDistance,horizontalDistance);
+
+        //ctx.fillStyle = "purple";
+        //ctx.fillRect(xof-4,yof-4,8,8)
+        //console.log(mini)
+    }
+    return distances
+}
+
+function generateStrips(){
+    //document.querySelector('#strip0').style.height = "100%"
+    for (let i = 1; i < stripNumber ; i++){
+        let currentStrip = document.querySelector('#strip0');
+        let clonedStrip = currentStrip.cloneNode(true);
+        clonedStrip.id = 'strip'+ (stripNumber-i) ;
+        currentStrip.after(clonedStrip)
+    }
+}
+
+
+function updateRandomStrips(){
+    /*
+    Genearates a sine-wave looking thing.
+    What I used initially to test if the strips were all working.
+    Not deleting it because I think it looks cool.
+    */
+    let shift = Math.random()*2 - 1
+    for (let i=0; i<stripNumber; i++){
+        let stripName = "strip" + i
+        let wallHeight = Math.abs(Math.sin(shift + (2*Math.PI*i)/(1.5*stripNumber)))*35
+        let skyGroundHeight = (100 - wallHeight)/2
+        document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
+        document.querySelector("#"+stripName+" #sky").style.height = skyGroundHeight + 10 + "%";
+        document.querySelector("#"+stripName+" #ground").style.height = skyGroundHeight - 10 + "%";
+    }
+}
+
+function updateAllStrips(pairs){
+    for (let i=0;i<stripNumber;i++){
+        distance = Math.min(pairs[i][0],pairs[i][1]);
+        direction = pairs[i][2];
+        let stripName = "strip" + i;
+        let wallHeight =  Math.min(100 * blockSize / distance, 100);
+        let skyGroundHeight = (100 - wallHeight)/2;
+
+        document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
+        document.querySelector("#"+stripName+" #sky").style.height = skyGroundHeight + "%";
+        document.querySelector("#"+stripName+" #ground").style.height = skyGroundHeight + "%";
+
+        if (direction == "V") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(167, 147, 130)";}
+        if (direction == "H") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(230, 200, 176)";}
+}}
+
+function updateSingleStrip(n,distance,direction){
+    let stripName = "strip" + n
+    let wallHeight =  Math.min(180 * blockSize / distance, 100)
+    let skyGroundHeight = (100 - wallHeight)/2
+
+    document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
+    document.querySelector("#"+stripName+" #sky").style.height = skyGroundHeight + "%";
+    document.querySelector("#"+stripName+" #ground").style.height = skyGroundHeight + "%";
+
+    if (direction == "V") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(167, 147, 130)";}
+    if (direction == "H") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(230, 200, 176)";}
+}
+
+// SET THESE CONSTANTS NICELY SO THERES NO REMAINDER
+// I COULD USE FLOOR BUT THEN THERE MIGHT BE OTHER THINGS TO ADJUST
+
+let PI = 3.141592653589793 // 15 decimal places, just like NASA lol
+const FOV = PI / 3      // Field of Vison in Radian
+const stripNumber = 240  // Number of Rays
+const radsPerStrip = FOV / stripNumber
+let blockSize = 50 // Width and Height of a "block" on the Map
+// Setting width of first strip, this is then cloned
+document.getElementById("strip0").style.width = (100/stripNumber)+"%"
+
+// PLAYER INFORMATION
+let playerStepSize = 5
+let playerPosition = {x:75,y:75} // starting location, [0,0] is top-left
+let playerAngle = PI/2 // starting angle, 0 is facing East
+mz = 35
+conversion = (mz/blockSize)
+
+
+// 0 = empty
+// 1 = wall
+// 2 = goal
+// top and bottom are flipped in game
+// left and right are NOT flipped
+let map = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,1,1,1,1,1,1,0,0,1],
+            [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,1,0,0,1],
+            [1,0,0,1,1,1,1,1,1,1,1,1,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ]
+
+
+
+document.addEventListener('keydown', function(event){
+//console.log(event.key)
+    if (["a","ArrowLeft"].includes(event.key)){
+        // rotates by PI/10 clockwise
+        playerAngle = (playerAngle + PI/90 + 2*PI)%(2*PI)
+    }
+    if (["d","ArrowRight"].includes(event.key)){
+        playerAngle = (playerAngle - PI/90 + 2*PI)%(2*PI)
+    }
+    if (["w","ArrowUp"].includes(event.key)){
+        futureX = playerPosition.x + playerStepSize*Math.cos(playerAngle);
+        futureY = playerPosition.y + playerStepSize*Math.sin(playerAngle);
+        if (canBeMovedTo(futureX,futureY)){
+            playerPosition.x = futureX
+            playerPosition.y = futureY
+        }
+    }
+    if (["s","ArrowDown"].includes(event.key)){
+        futureX = playerPosition.x - playerStepSize*Math.cos(playerAngle);
+        futureY = playerPosition.y - playerStepSize*Math.sin(playerAngle);
+        if (canBeMovedTo(futureX,futureY)){
+            playerPosition.x = futureX
+            playerPosition.y = futureY
+        }
+    }
+    if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
+        
+        //updateAllStrips(CD)
+        console.log("Current playerAngle",playerAngle);
+        console.log("Current playerPos",playerPosition)
+
+        // BEYOND HERE IS MAZE STUFF
+        
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "white"
+        ctx.fillRect(0,0,500,500)
+        
+        ctx.fillStyle = "black"
+        for (let i=0;i<map.length;i++){
+            for(let j=0;j<map[0].length;j++){
+                if (map[i][j]==1){ctx.fillRect(j*mz,i*mz,mz,mz);}
+                else {ctx.rect(j*mz,i*mz,mz,mz);ctx.stroke();}
+            }
+        }
+        // that ctx.stroke() in the if statement above is making
+        // the arrow get drawn twice for some reason, super annoying, i'll fix it LATER
+        ctx.beginPath();
+        ctx.moveTo((mz/blockSize)*playerPosition.x,(mz/blockSize)*playerPosition.y)
+        ctx.lineTo((mz/blockSize)*playerPosition.x + Math.cos(playerAngle)*30,(mz/blockSize)*playerPosition.y +Math.sin(playerAngle)*30)
+        ctx.lineTo((mz/blockSize)*playerPosition.x + Math.cos(playerAngle+PI/18)*25,(mz/blockSize)*playerPosition.y +Math.sin(playerAngle+PI/18)*25)
+        ctx.lineTo((mz/blockSize)*playerPosition.x + Math.cos(playerAngle-PI/18)*25,(mz/blockSize)*playerPosition.y +Math.sin(playerAngle-PI/18)*25)
+        ctx.lineTo((mz/blockSize)*playerPosition.x + Math.cos(playerAngle)*30,(mz/blockSize)*playerPosition.y +Math.sin(playerAngle)*30)
+        ctx.stroke();
+
+        ctx.fillStyle = "purple";
+        ctx.fillRect((mz/blockSize)*playerPosition.x-4,(mz/blockSize)*playerPosition.y-4,8,8)
+        CD = closestDist()
+        //console.log(CD)
+        updateAllStrips(CD)
+        
+        for(let ray=0 ; ray<stripNumber ; ray++){
+        let rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+            diss = CD[ray][0];
+            xc = playerPosition.x + diss*Math.cos(rayAngle);
+            yc = playerPosition.y + diss*Math.sin(rayAngle);
+            ctx.fillStyle = "red";
+            ctx.fillRect(xc * mz/blockSize-4, yc*mz/blockSize-4,8,8)
+
+            diss = CD[ray][1];
+            xc = playerPosition.x + diss*Math.cos(rayAngle);
+            yc = playerPosition.y + diss*Math.sin(rayAngle);
+            ctx.fillStyle = "green";
+            ctx.fillRect(xc * mz/blockSize-4, yc*mz/blockSize-4,8,8)
+
+                    }
+    }
+} 
+)
+
+window.addEventListener('load', function(event){
+    generateStrips();
+    updateAllStrips(closestDist());
+
+    // CREATING BLANK MAZE
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "white"
+    ctx.fillRect(0,0,500,500)
+    
+    ctx.fillStyle = "black"
+    for (let i=0;i<map.length;i++){
+        for(let j=0;j<map[0].length;j++){
+            if (map[i][j]==1){ctx.fillRect(j*mz,i*mz,mz,mz);}
+            else {ctx.rect(j*mz,i*mz,mz,mz);ctx.stroke();}
+        }
+    }
+
+    }
+  );
+
+
+</script>
+
+</body>
