@@ -5,7 +5,9 @@ Just download `maze.html` and open to play.<br>
 Or download `maze_mechanics.html` to see how the distances are calculated.
 <br><br>
 
-<img src="assets/demo.gif" height="200px">
+<div align=center>
+ <img src="assets/demo.gif" height="200px">
+</div>
 
 <br>
  References : 
