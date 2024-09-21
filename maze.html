@@ -1,3 +1,4 @@
+<!-- A little raycasting game called Maze Escape. Jerry G (jrygeorge). -->
 <head>
     <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACSSURBVEhLY6xZ8+I/A40BE5SmKRi1hCRAlYjPkjkBZWEHFPskim8PlIUbUGRJMMc2KAs/INsS51+roCzCgHFhTzVZcSInJc4gwMfDwM7GBqbxgeGThEctIQmMWkISoIsljOr1hmTl+BnqibTP8Rk350NZhAFFwRVxejKUhR9QHCeBR3uhLNyA7DghBdAhdTEwAAAjyRl/u18AXgAAAABJRU5ErkJggg=="/>
     <title>Maze Escape by jrygeorge </title>
@@ -67,7 +68,7 @@ function distanceToPlayer(otherX,otherY){
     return Math.sqrt((otherX-playerPosition.x)**2 + (otherY-playerPosition.y)**2);
 }
 
-function blockInFront(newX, newY){
+function blockInPath(newX, newY){
     /*
     Return the type of the block in front of us.
     Used to check if movement is possible.
@@ -275,7 +276,6 @@ function updateRandomStrips(){
 }
 
 function updateAllStrips(rayInfo){
-    // 2 has no colour as it is the exit
     const blockToColour = new Map([
                         ["1V", "rgb(167, 147, 130)"],
                         ["1H", "rgb(230, 200, 176)"],
@@ -324,12 +324,12 @@ function updateSingleStrip(n,distance,direction){
 // SET THESE CONSTANTS NICELY SO THERES NO REMAINDER
 // I COULD USE FLOOR BUT THEN THERE MIGHT BE OTHER THINGS TO ADJUST
 
-let PI = Math.PI // 15 decimal places, just like NASA lol
-const FOV = PI / 3     // Field of Vison in Radian
-const stripNumber = 240  // Number of Rays
-const radsPerStrip = FOV / stripNumber
+let PI = Math.PI;
+const FOV = PI / 3;
+const stripNumber = 240;
+const radsPerStrip = FOV / stripNumber;
 let blockSize = 50 // Width and Height of a "block" on the Map
-let currentLevel = 4
+let currentLevel = 0 
 
 // Setting width of first strip, this is then cloned
 document.getElementById("strip0").style.width = (100/stripNumber)+"%"
@@ -344,11 +344,11 @@ let playerStartingAngles = [0,PI/2,15*PI/8,0,PI/4]
 let playerPosition = {x:playerStartingPositions[currentLevel][0], y:playerStartingPositions[currentLevel][1]}
 let playerAngle = playerStartingAngles[currentLevel]
 
-// -1 = goal/exit
-// 0 = empty
-// 1,.. = wall
-// top and bottom are flipped in game
-// left and right are NOT flipped
+/*
+-1    = GOAL / EXIT
+0     = SPACE
+1,2...= WALLS
+*/
 let map = [[
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -459,39 +459,38 @@ let map = [[
 
 
 document.addEventListener('keydown', function(event){
-//console.log(event.key)
+
     if (["a","ArrowLeft"].includes(event.key)){
-        // rotates by PI/10 clockwise
-        playerAngle = (playerAngle + playerAngleStepSize + 2*PI)%(2*PI)
+        playerAngle = (playerAngle + playerAngleStepSize + 2*PI)%(2*PI);
     }
     if (["d","ArrowRight"].includes(event.key)){
-        playerAngle = (playerAngle - playerAngleStepSize + 2*PI)%(2*PI)
+        playerAngle = (playerAngle - playerAngleStepSize + 2*PI)%(2*PI);
     }
     if (["w","ArrowUp"].includes(event.key)){
         futureX = playerPosition.x + playerStepSize*Math.cos(playerAngle);
         futureY = playerPosition.y + playerStepSize*Math.sin(playerAngle);
-        if (blockInFront(futureX,futureY)==0){
-            playerPosition.x = futureX
-            playerPosition.y = futureY
+        if (blockInPath(futureX,futureY)==0){
+            playerPosition.x = futureX;
+            playerPosition.y = futureY;
         }
-        if (blockInFront(futureX,futureY)==-1){
-            advanceLevel()
+        if (blockInPath(futureX,futureY)==-1){
+            advanceLevel();
         }
     }
     if (["s","ArrowDown"].includes(event.key)){
         futureX = playerPosition.x - playerStepSize*Math.cos(playerAngle);
         futureY = playerPosition.y - playerStepSize*Math.sin(playerAngle);
-        if (blockInFront(futureX,futureY)==0){
-            playerPosition.x = futureX
-            playerPosition.y = futureY
+        if (blockInPath(futureX,futureY)==0){
+            playerPosition.x = futureX;
+            playerPosition.y = futureY;
         }
-        if (blockInFront(futureX,futureY)==-1){
-            advanceLevel()
+        if (blockInPath(futureX,futureY)==-1){
+            advanceLevel();
         }
     }
     if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
-        CD = closestDist()
-        updateAllStrips(CD)
+        stripData = closestDist();
+        updateAllStrips(stripData);
     }
 } );
 
