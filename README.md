@@ -1,6 +1,9 @@
 ## A Simple Raycaster in a single HTML file
 ###### (also the first *proper* thing I've made in javascript)
 
+Just download `maze.html` and open to play.
+Or download `maze_debug.html` to see how the distances are calculated.
+
  References : 
 
 - <a href="https://youtu.be/TOEi6T2mtHo?si=rA3NX6LXQvBGWnL0">Coding Train - Coding Challenge #145: 2D Raycasting</a></li>
