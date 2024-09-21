@@ -1,6 +1,6 @@
 <head>
     <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACSSURBVEhLY6xZ8+I/A40BE5SmKRi1hCRAlYjPkjkBZWEHFPskim8PlIUbUGRJMMc2KAs/INsS51+roCzCgHFhTzVZcSInJc4gwMfDwM7GBqbxgeGThEctIQmMWkISoIsljOr1hmTl+BnqibTP8Rk350NZhAFFwRVxejKUhR9QHCeBR3uhLNyA7DghBdAhdTEwAAAjyRl/u18AXgAAAABJRU5ErkJggg=="/>
-    <title>|| Maze Escape || by jrygeorge </title>
+    <title>Maze Escape by jrygeorge </title>
     <style>
         h1 {
             font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
@@ -38,6 +38,7 @@
 </head>
 
 <body style="background-color:rgb(2, 73, 80);">
+
 <div id="container" style="margin: auto; width: 50%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
     <div id="strip0" style="float: left; width: 100%; height: 100%;">
         <div class="stripPart sky" id="sky"> </div>
@@ -71,16 +72,29 @@ function canBeMovedTo(newX, newY){
 }
 
 function closestDist(){
+    distances = []
     for(let ray=0 ; ray<stripNumber ; ray++){
         /*
         Ray 0 is at angle : playerAngle + radsPerStrip*(stripNumber/2)
         Ray N is at angle : playerAngle - radsPerStrip*(stripNumber/2)
         i.e. Half the strips are on one side, half on the other.
         */
-        rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+        let rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+        //rayAngle = playerAngle
+        //console.log(ray,rayAngle)
+        //rayAngle = (Math.atan(  (((stripNumber-ray)*1600/stripNumber) - 800)/(800/Math.tan(PI/6))  ) + playerAngle + 2*PI)%(2*PI)
+        /*
+        if (ray > 0){
+            a = (playerAngle + radsPerStrip*(stripNumber/2 - ray-1) + 2*PI)%(2*PI);
+            b = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
+            console.log(ray,b-a)
+        }*/
+        //console.log(ray,(180/PI)*rayAngle)
         // rounding down
-        let roundX = Math.floor(playerPosition.x / blockSize) * blockSize;
-        let roundY = Math.floor(playerPosition.x / blockSize) * blockSize;
+        
+        let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
+        let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
+
         let horizontalDistance = Infinity;
         let verticalDistance = Infinity;
         
@@ -92,13 +106,15 @@ function closestDist(){
             let toCheckX = roundX + offsetX;
             let toCheckY = roundY + offsetY;
             while (depth > 0){
-                mapX = Math.floor(toCheckX/ blockSize);
+
+                mapX = Math.floor(toCheckX / blockSize);
                 mapY = Math.floor(toCheckY / blockSize);
                 if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
                 if (map[mapY][mapX] == 1){
                     depth = -1;
                 }
                 else{
+
                     toCheckX += offsetX;
                     toCheckY += offsetY;
                     depth -= 1;
@@ -117,13 +133,15 @@ function closestDist(){
             let toCheckX = roundX + offsetX ;
             let toCheckY = roundY + offsetY ;
             while (depth > 0){
-                mapX = Math.ceil(toCheckX / blockSize);
-                mapY = Math.floor(toCheckY / blockSize);
+
+                mapX = Math.floor(toCheckX / blockSize);
+                mapY = Math.floor(toCheckY / blockSize)-1;
                 if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
                 if (map[mapY][mapX] == 1){
                     depth = -1;
                 }
                 else{
+
                     toCheckX += offsetX;
                     toCheckY += offsetY;
                     depth -=1 ;
@@ -132,7 +150,8 @@ function closestDist(){
                     toCheckY = Infinity;
                 depth = -1}
             }
-            
+
+
             horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
         }
         if ( (rayAngle == 0) || (rayAngle == PI) ){
@@ -142,6 +161,10 @@ function closestDist(){
         }
         
         // DISTANCE TO CLOSEST VERTICAL EDGE
+
+        roundX = Math.floor( playerPosition.x / blockSize) * blockSize;
+        roundY = playerPosition.y + (-playerPosition.x+ roundX)*Math.tan(rayAngle)
+
         if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){ // RIGHT
             let depth = 30;
             let offsetX = blockSize;
@@ -174,8 +197,8 @@ function closestDist(){
             let toCheckX = roundX + offsetX ;
             let toCheckY = roundY + offsetY ;
             while (depth > 0){
-                mapX = Math.floor(toCheckX / blockSize);
-                mapY = Math.ceil(toCheckY / blockSize);
+                mapX = Math.floor(toCheckX / blockSize) - 1;
+                mapY = Math.floor(toCheckY / blockSize);
                 if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
                 if (map[mapY][mapX] == 1){
                     depth = -1;
@@ -189,7 +212,7 @@ function closestDist(){
                     toCheckY = Infinity;
                 depth = -1}
             }
-            
+
             verticalDistance = distanceToPlayer(toCheckX,toCheckY);
         }
         if ( (rayAngle == PI/2 ) || (rayAngle == 1.5*PI) ){
@@ -198,12 +221,23 @@ function closestDist(){
             
             verticalDistance = distanceToPlayer(toCheckX,toCheckY);
         }
-        fishCorrection = Math.cos( (playerAngle - rayAngle + 2*PI )%(2*PI) )
+            
+        fishCorrection = Math.cos( (playerAngle - rayAngle + 2*PI )%(2*PI) );
         if (horizontalDistance < verticalDistance)
-        {updateSingleStrip(ray,horizontalDistance * fishCorrection,"H" )}
+        {//updateSingleStrip(ray,horizontalDistance * fishCorrection,"H" )
+        distances.push([horizontalDistance*fishCorrection,"H"]);}
         else
-        {updateSingleStrip(ray,verticalDistance * fishCorrection,"V" )}
+        {//updateSingleStrip(ray,verticalDistance * fishCorrection,"V" )
+        distances.push([verticalDistance*fishCorrection,"V"]);
+        }
+
+        //mini = Math.min(verticalDistance,horizontalDistance);
+
+        //ctx.fillStyle = "purple";
+        //ctx.fillRect(xof-4,yof-4,8,8)
+        //console.log(mini)
     }
+    return distances
 }
 
 function generateStrips(){
@@ -234,9 +268,25 @@ function updateRandomStrips(){
     }
 }
 
+function updateAllStrips(pairs){
+    for (let i=0;i<stripNumber;i++){
+        distance = pairs[i][0];
+        direction = pairs[i][1];
+        let stripName = "strip" + i;
+        let wallHeight =  Math.min(150 * blockSize / distance, 100);
+        let skyGroundHeight = (100 - wallHeight)/2;
+
+        document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
+        document.querySelector("#"+stripName+" #sky").style.height = skyGroundHeight + "%";
+        document.querySelector("#"+stripName+" #ground").style.height = skyGroundHeight + "%";
+
+        if (direction == "V") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(167, 147, 130)";}
+        if (direction == "H") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(230, 200, 176)";}
+}}
+
 function updateSingleStrip(n,distance,direction){
     let stripName = "strip" + n
-    let wallHeight =  Math.min(blockSize*40 / distance, 100)
+    let wallHeight =  Math.min(150 * blockSize / distance, 100)
     let skyGroundHeight = (100 - wallHeight)/2
 
     document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
@@ -252,13 +302,15 @@ function updateSingleStrip(n,distance,direction){
 
 let PI = 3.141592653589793 // 15 decimal places, just like NASA lol
 const FOV = PI / 3      // Field of Vison in Radian
-const stripNumber = 60  // Number of Rays
+const stripNumber = 120  // Number of Rays
 const radsPerStrip = FOV / stripNumber
 let blockSize = 50 // Width and Height of a "block" on the Map
 // Setting width of first strip, this is then cloned
 document.getElementById("strip0").style.width = (100/stripNumber)+"%"
 
-let playerPosition = {x:125,y:125} // starting location, [0,0] is top-left
+// PLAYER INFORMATION
+let playerStepSize = 5
+let playerPosition = {x:350,y:350} // starting location, [0,0] is top-left
 let playerAngle = PI/2 // starting angle, 0 is facing East
 
 // 0 = empty
@@ -267,59 +319,62 @@ let playerAngle = PI/2 // starting angle, 0 is facing East
 // top and bottom are flipped in game
 // left and right are NOT flipped
 let map = [
-            [1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,1,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1]
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         ]
+
 
 document.addEventListener('keydown', function(event){
 //console.log(event.key)
     if (["a","ArrowLeft"].includes(event.key)){
         // rotates by PI/10 clockwise
-        playerAngle = (playerAngle + PI/10 + 2*PI)%(2*PI)
+        playerAngle = (playerAngle + PI/90 + 2*PI)%(2*PI)
     }
     if (["d","ArrowRight"].includes(event.key)){
-        playerAngle = (playerAngle - PI/10 + 2*PI)%(2*PI)
+        playerAngle = (playerAngle - PI/90 + 2*PI)%(2*PI)
     }
     if (["w","ArrowUp"].includes(event.key)){
-        // finds distance moved in x and y direction, and rounds to ONE decimal place
-        futureX = playerPosition.x + 10*Math.cos(playerAngle);
-        futureY = playerPosition.y + 10*Math.sin(playerAngle);
+        futureX = playerPosition.x + playerStepSize*Math.cos(playerAngle);
+        futureY = playerPosition.y + playerStepSize*Math.sin(playerAngle);
         if (canBeMovedTo(futureX,futureY)){
             playerPosition.x = futureX
             playerPosition.y = futureY
         }
-        //else {console.log("HIT BOUNDARY")}
     }
     if (["s","ArrowDown"].includes(event.key)){
-        futureX = playerPosition.x - 10*Math.cos(playerAngle);
-        futureY = playerPosition.y - 10*Math.sin(playerAngle);
+        futureX = playerPosition.x - playerStepSize*Math.cos(playerAngle);
+        futureY = playerPosition.y - playerStepSize*Math.sin(playerAngle);
         if (canBeMovedTo(futureX,futureY)){
             playerPosition.x = futureX
             playerPosition.y = futureY
         }
-        //else {console.log("HIT BOUNDARY")}
     }
     if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
-        //updateStrips()
-        //console.log("closest horizontal",closestDist())
-        console.log("Current playerAngle",playerAngle)
+        CD = closestDist()
+        updateAllStrips(CD)
+        console.log("Current playerAngle",playerAngle);
         console.log("Current playerPos",playerPosition)
-        //newUpdateStrips(closestDist())
-        closestDist()
     }
+
+
 } );
 
 window.addEventListener('load', function(event){
     generateStrips();
-    closestDist();
+    updateAllStrips(closestDist());
     }
   );
 
