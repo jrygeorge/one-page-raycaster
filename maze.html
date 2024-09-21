@@ -39,7 +39,7 @@
 
 <body style="background-color:rgb(2, 73, 80);">
 
-<div id="container" style="margin: auto; width: 50%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
+<div id="casted" style="margin: auto; width: 70%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
     <div id="strip0" style="float: left; width: 100%; height: 100%;">
         <div class="stripPart sky" id="sky"> </div>
         <div class="stripPart wall" id="wall"> </div>
@@ -130,8 +130,8 @@ function closestDist(){
             let depth = 30;
             let offsetY = - blockSize;
             let offsetX = - blockSize / Math.tan(rayAngle);
-            let toCheckX = roundX + offsetX ;
-            let toCheckY = roundY + offsetY ;
+            let toCheckX = roundX ;//+ offsetX ;
+            let toCheckY = roundY ;//+ offsetY ;
             while (depth > 0){
 
                 mapX = Math.floor(toCheckX / blockSize);
@@ -172,8 +172,8 @@ function closestDist(){
             let toCheckX = roundX + offsetX;
             let toCheckY = roundY + offsetY;
             while (depth > 0){
-                mapX = Math.floor(toCheckX / blockSize);
-                mapY = Math.floor(toCheckY / blockSize);
+                mapX = Math.floor(toCheckX  / blockSize);
+                mapY = Math.floor(toCheckY  / blockSize);
                 if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
                 if (map[mapY][mapX] == 1){
                     depth = -1;
@@ -194,10 +194,10 @@ function closestDist(){
             let depth = 30;
             let offsetX = - blockSize;
             let offsetY = - blockSize * Math.tan(rayAngle);
-            let toCheckX = roundX + offsetX ;
-            let toCheckY = roundY + offsetY ;
+            let toCheckX = roundX ;//+ offsetX ;
+            let toCheckY = roundY ;//+ offsetY ;
             while (depth > 0){
-                mapX = Math.floor(toCheckX / blockSize) - 1;
+                mapX = Math.floor(toCheckX / blockSize)-1;
                 mapY = Math.floor(toCheckY / blockSize);
                 if ((mapX >=0) && (mapY>=0) && (mapX<map[0].length) && (mapY<map.length) ){
                 if (map[mapY][mapX] == 1){
@@ -241,7 +241,6 @@ function closestDist(){
 }
 
 function generateStrips(){
-    //document.querySelector('#strip0').style.height = "100%"
     for (let i = 1; i < stripNumber ; i++){
         let currentStrip = document.querySelector('#strip0');
         let clonedStrip = currentStrip.cloneNode(true);
@@ -273,7 +272,7 @@ function updateAllStrips(pairs){
         distance = pairs[i][0];
         direction = pairs[i][1];
         let stripName = "strip" + i;
-        let wallHeight =  Math.min(150 * blockSize / distance, 100);
+        let wallHeight =  Math.min(200 * blockSize / distance, 100);
         let skyGroundHeight = (100 - wallHeight)/2;
 
         document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
@@ -302,16 +301,17 @@ function updateSingleStrip(n,distance,direction){
 
 let PI = 3.141592653589793 // 15 decimal places, just like NASA lol
 const FOV = PI / 3      // Field of Vison in Radian
-const stripNumber = 120  // Number of Rays
+const stripNumber = 240  // Number of Rays
 const radsPerStrip = FOV / stripNumber
 let blockSize = 50 // Width and Height of a "block" on the Map
 // Setting width of first strip, this is then cloned
 document.getElementById("strip0").style.width = (100/stripNumber)+"%"
 
 // PLAYER INFORMATION
-let playerStepSize = 5
+let playerStepSize = 10
+let playerAngleStepSize = PI/36
 let playerPosition = {x:350,y:350} // starting location, [0,0] is top-left
-let playerAngle = PI/2 // starting angle, 0 is facing East
+let playerAngle = PI/2
 
 // 0 = empty
 // 1 = wall
@@ -341,10 +341,10 @@ document.addEventListener('keydown', function(event){
 //console.log(event.key)
     if (["a","ArrowLeft"].includes(event.key)){
         // rotates by PI/10 clockwise
-        playerAngle = (playerAngle + PI/90 + 2*PI)%(2*PI)
+        playerAngle = (playerAngle + playerAngleStepSize + 2*PI)%(2*PI)
     }
     if (["d","ArrowRight"].includes(event.key)){
-        playerAngle = (playerAngle - PI/90 + 2*PI)%(2*PI)
+        playerAngle = (playerAngle - playerAngleStepSize + 2*PI)%(2*PI)
     }
     if (["w","ArrowUp"].includes(event.key)){
         futureX = playerPosition.x + playerStepSize*Math.cos(playerAngle);
