@@ -40,7 +40,7 @@
 
 <body style="background-color:rgb(2, 73, 80);">
 
-<div id="casted" style="margin: auto; width: 50%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
+<div id="casted" style="margin: auto; width: 60%; height: 80%;  background: black; box-shadow: 0px 0px 10px rgb(18,18,18);">
     <div id="strip0" style="float: left; width: 100%; height: 100%;">
         <div class="stripPart sky" id="sky"> </div>
         <div class="stripPart wall" id="wall"> </div>
@@ -55,7 +55,7 @@
     - Level 1 -
 </h4>
 <h3>
-    AD or ←→ to look around <br>
+    AD or ←→ or click and use Mouse to look around <br>
     WS or ↑↓ to move 
 </h3>
 <h4>
@@ -63,6 +63,10 @@
 </h4>
 
 <script>
+
+function changePlayerAngle(dir,control){
+    playerAngle = (playerAngle + dir*playerAngleStepSize[control] + 2*PI)%(2*PI);
+}
 
 function distanceToPlayer(otherX,otherY){
     return Math.sqrt((otherX-playerPosition.x)**2 + (otherY-playerPosition.y)**2);
@@ -79,7 +83,10 @@ function blockInPath(newX, newY){
 }
 
 function advanceLevel(){
-    if (currentLevel+1==map.length){ alert("Congrats ! You won !!"); }
+    if (currentLevel+1==map.length){
+        document.exitPointerLock();
+        alert("Congrats ! You won !!");
+         }
     // next level or loop back to zero
     currentLevel = (currentLevel + 1) % map.length;
     document.querySelector("#level").textContent = "- Level "+(currentLevel+1)+" -";
@@ -90,7 +97,7 @@ function advanceLevel(){
         
     }
 
-function closestDist(){
+function computeStripData(){
     distances = []
     for(let ray=0 ; ray<stripNumber ; ray++){
         /*
@@ -100,16 +107,17 @@ function closestDist(){
         */
         let rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
 
-        let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
-        let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
-
         let horizontalDistance = Infinity;
         let verticalDistance = Infinity;
         let vblockType = 0;
         let hblockType = 0;
-        
-        // DISTANCE TO CLOSEST HORIZONTAL EDGE
-        if ( (rayAngle > 0) && (rayAngle < PI) ){ // UP
+
+        // I . Distance to closest Horizontal Edge
+        let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
+        let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
+
+        // I (a) . Horizontal Edge - Looking UP
+        if ( (rayAngle > 0) && (rayAngle < PI) ){
             let depth = 30;
             let offsetY = blockSize;
             let offsetX = blockSize / Math.tan(rayAngle);
@@ -137,7 +145,8 @@ function closestDist(){
 
             horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
             }
-        if ( (rayAngle > PI) && (rayAngle < 2*PI) ){ // DOWN
+        // I (b) . Horizontal Edge - Looking DOWN
+        if ( (rayAngle > PI) && (rayAngle < 2*PI) ){
             let depth = 30;
             let offsetY = - blockSize;
             let offsetX = - blockSize / Math.tan(rayAngle);
@@ -172,12 +181,12 @@ function closestDist(){
             horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
         }
         
-        // DISTANCE TO CLOSEST VERTICAL EDGE
+        // II . Distance to closest Vertical Edge
 
         roundX = Math.floor( playerPosition.x / blockSize) * blockSize;
         roundY = playerPosition.y + (-playerPosition.x+ roundX)*Math.tan(rayAngle)
-
-        if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){ // RIGHT
+        // II (a) . Vertical Edge - Looking RIGHT
+        if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){
             let depth = 30;
             let offsetX = blockSize;
             let offsetY = blockSize * Math.tan(rayAngle);
@@ -203,7 +212,8 @@ function closestDist(){
 
             verticalDistance = distanceToPlayer(toCheckX,toCheckY);
             }
-        if ( (rayAngle < 1.5*PI) && (rayAngle > PI/2) ){ // LEFT
+        // II (b) . Vertical Edge - Looking LEFT
+        if ( (rayAngle < 1.5*PI) && (rayAngle > PI/2) ){
             let depth = 30;
             let offsetX = - blockSize;
             let offsetY = - blockSize * Math.tan(rayAngle);
@@ -276,7 +286,7 @@ function updateRandomStrips(){
 }
 
 function updateAllStrips(rayInfo){
-    const blockToColour = new Map([
+    const blockToWallColour = new Map([
                         ["1V", "rgb(167, 147, 130)"],
                         ["1H", "rgb(230, 200, 176)"],
                         ["2V", "rgb(250, 0, 0)"],
@@ -290,21 +300,23 @@ function updateAllStrips(rayInfo){
                     ])
 
     for (let i=0;i<stripNumber;i++){
+        
         distance = rayInfo[i][0];
         direction = rayInfo[i][1];
         bType = rayInfo[i][2];
         combo = bType+direction;
 
         let stripName = "strip" + i;
-        let wallHeight =  Math.min(120 * blockSize / distance, 100);
+        let wallHeight =  Math.min(150 * blockSize / distance, 100);
         let skyGroundHeight = (100 - wallHeight)/2;
        
-
+        // Setting heights of strip components
         document.querySelector("#"+stripName+" #wall").style.height = wallHeight + "%";
         document.querySelector("#"+stripName+" #sky").style.height = skyGroundHeight + "%";
         document.querySelector("#"+stripName+" #ground").style.height = skyGroundHeight + "%";
 
-        document.querySelector("#"+stripName+" #wall").style.background = blockToColour.get(combo);
+        // Setting colour of wall strip component
+        document.querySelector("#"+stripName+" #wall").style.background = blockToWallColour.get(combo);
         
 }}
 
@@ -321,12 +333,10 @@ function updateSingleStrip(n,distance,direction){
     if (direction == "H") {document.querySelector("#"+stripName+" #wall").style.background = "rgb(230, 200, 176)";}
 }
 
-// SET THESE CONSTANTS NICELY SO THERES NO REMAINDER
-// I COULD USE FLOOR BUT THEN THERE MIGHT BE OTHER THINGS TO ADJUST
 
 let PI = Math.PI;
 const FOV = PI / 3;
-const stripNumber = 240;
+const stripNumber = 180;
 const radsPerStrip = FOV / stripNumber;
 let blockSize = 50 // Width and Height of a "block" on the Map
 let currentLevel = 0 
@@ -335,8 +345,8 @@ let currentLevel = 0
 document.getElementById("strip0").style.width = (100/stripNumber)+"%"
 
 // PLAYER INFORMATION
-let playerStepSize = 10
-let playerAngleStepSize = PI/90
+let playerStepSize = 4
+let playerAngleStepSize = {"key":PI/90, "mouse":PI/360}
  // starting location for each map, [0,0] is top-left
 let playerStartingPositions = [[75,125],[75,75],[210,540],[225,75],[55,55]]
 let playerStartingAngles = [0,PI/2,15*PI/8,0,PI/4]
@@ -461,10 +471,10 @@ let map = [[
 document.addEventListener('keydown', function(event){
 
     if (["a","ArrowLeft"].includes(event.key)){
-        playerAngle = (playerAngle + playerAngleStepSize + 2*PI)%(2*PI);
+        changePlayerAngle(1,"key");
     }
     if (["d","ArrowRight"].includes(event.key)){
-        playerAngle = (playerAngle - playerAngleStepSize + 2*PI)%(2*PI);
+        changePlayerAngle(-1,"key");
     }
     if (["w","ArrowUp"].includes(event.key)){
         futureX = playerPosition.x + playerStepSize*Math.cos(playerAngle);
@@ -489,16 +499,27 @@ document.addEventListener('keydown', function(event){
         }
     }
     if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
-        stripData = closestDist();
+        stripData = computeStripData();
         updateAllStrips(stripData);
     }
 } );
 
 window.addEventListener('load', function(event){
     generateStrips();
-    updateAllStrips(closestDist());
+    updateAllStrips(computeStripData());
     }
   );
+
+document.body.addEventListener("mousemove", function (e) {
+    if(document.pointerLockElement !== null){
+        changePlayerAngle(-e.movementX,"mouse");
+        updateAllStrips(computeStripData());
+}});
+
+document.addEventListener("click", function (e) {
+    document.body.requestPointerLock();
+    });
+
 
 
 </script>
