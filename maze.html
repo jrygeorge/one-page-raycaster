@@ -1,7 +1,7 @@
 <!-- A little raycasting game called Maze Escape. Jerry G (jrygeorge). -->
 <head>
-    <link rel="shorcut icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACSSURBVEhLY6xZ8+I/A40BE5SmKRi1hCRAlYjPkjkBZWEHFPskim8PlIUbUGRJMMc2KAs/INsS51+roCzCgHFhTzVZcSInJc4gwMfDwM7GBqbxgeGThEctIQmMWkISoIsljOr1hmTl+BnqibTP8Rk350NZhAFFwRVxejKUhR9QHCeBR3uhLNyA7DghBdAhdTEwAAAjyRl/u18AXgAAAABJRU5ErkJggg=="/>
-    <title>Maze Escape by jrygeorge </title>
+    <link rel="icon" href="data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAJOgAACToAYJjBRwAAACSSURBVEhLY6xZ8+I/A40BE5SmKRi1hCRAlYjPkjkBZWEHFPskim8PlIUbUGRJMMc2KAs/INsS51+roCzCgHFhTzVZcSInJc4gwMfDwM7GBqbxgeGThEctIQmMWkISoIsljOr1hmTl+BnqibTP8Rk350NZhAFFwRVxejKUhR9QHCeBR3uhLNyA7DghBdAhdTEwAAAjyRl/u18AXgAAAABJRU5ErkJggg=="/>
+    <title>Maze Escape by jrygeorge</title>
     <style>
         h1 {
             font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
@@ -67,8 +67,7 @@
 function changePlayerAngle(dir,control){
     /*
     dir is if the angle is to be increased or decreased
-    control is if we're using Mouse or Keyboard
-    as the amount moved is different for each
+    control is if we're using Mouse or Keyboard, as the amount moved is different for each
     */
     playerAngle = (playerAngle + dir*playerAngleStepSize[control] + 2*PI)%(2*PI);
 }
@@ -79,7 +78,7 @@ function distanceToPlayer(otherX,otherY){
 
 function blockInPath(newX, newY){
     /*
-    Return the type of the block in front of us.
+    Return the type of the block in present in the direction we're moving
     Used to check if movement is possible.
     */
     let coX = Math.floor(newX/blockSize)
@@ -100,11 +99,151 @@ function advanceLevel(){
     playerAngle = playerStartingAngles[currentLevel];
     playerPosition.x = playerStartingPositions[currentLevel][0];
     playerPosition.y = playerStartingPositions[currentLevel][1];
-        
     }
 
+
+function computeHorizontalStripData(rayAngle){
+    // I . Distance to closest Horizontal Edge
+    let horizontalDistance = Infinity;
+    let blockType = 0;
+    let depth = 30;
+    
+    let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
+    let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
+    let toCheckX = 0
+    let toCheckY = 0
+
+    // I (a) . Horizontal Edge - Looking UP
+    if ( (rayAngle > 0) && (rayAngle < PI) ){
+        let offsetY = blockSize;
+        let offsetX = blockSize / Math.tan(rayAngle);
+        toCheckX = roundX + offsetX;
+        toCheckY = roundY + offsetY;
+        while (depth > 0){
+
+            mapX = Math.floor(toCheckX / blockSize);
+            mapY = Math.floor(toCheckY / blockSize);
+            if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
+                if (map[currentLevel][mapY][mapX] > 0){
+                    depth = -1;
+                    blockType = map[currentLevel][mapY][mapX];
+                }
+                else{
+
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1;
+                }}
+            else{toCheckX = Infinity;
+                toCheckY = Infinity;
+                depth = -1}
+        }
+    }
+    // I (b) . Horizontal Edge - Looking DOWN
+    if ( (rayAngle > PI) && (rayAngle < 2*PI) ){
+        let offsetY = - blockSize;
+        let offsetX = - blockSize / Math.tan(rayAngle);
+        toCheckX = roundX ;
+        toCheckY = roundY ;
+        while (depth > 0){
+            mapX = Math.floor(toCheckX / blockSize);
+            mapY = Math.floor(toCheckY / blockSize)-1;
+            if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
+                if (map[currentLevel][mapY][mapX] > 0){
+                    depth = -1;
+                    blockType = map[currentLevel][mapY][mapX];
+                }
+                else{
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -=1 ;
+                }}
+            else{toCheckX = Infinity;
+                toCheckY = Infinity;
+                depth = -1}
+        }
+    }
+    if ( (rayAngle == 0) || (rayAngle == PI) ){
+        toCheckX = Infinity;
+        toCheckY = Infinity;
+    }
+
+    horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
+    return [horizontalDistance,blockType]
+}
+
+function computeVerticalStripData(rayAngle){
+    // II . Distance to closest Vertical Edge
+    let verticalDistance = Infinity;
+    let blockType = 0;
+    let depth = 30;
+
+    let roundX = Math.floor( playerPosition.x / blockSize) * blockSize;
+    let roundY = playerPosition.y + (-playerPosition.x+ roundX)*Math.tan(rayAngle);
+    let toCheckX = 0;
+    let toCheckY = 0;
+
+    // II (a) . Vertical Edge - Looking RIGHT
+    if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){
+        let offsetX = blockSize;
+        let offsetY = blockSize * Math.tan(rayAngle);
+        toCheckX = roundX + offsetX;
+        toCheckY = roundY + offsetY;
+        while (depth > 0){
+            mapX = Math.floor(toCheckX  / blockSize);
+            mapY = Math.floor(toCheckY  / blockSize);
+            if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
+                if (map[currentLevel][mapY][mapX] > 0){
+                    depth = -1;
+                    blockType = map[currentLevel][mapY][mapX];
+                }
+                else{
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1;
+                }}
+            else{
+                toCheckX = Infinity;
+                toCheckY = Infinity;
+                depth = -1}
+        }
+    }
+    // II (b) . Vertical Edge - Looking LEFT
+    if ( (rayAngle < 1.5*PI) && (rayAngle > PI/2) ){
+        let offsetX = - blockSize;
+        let offsetY = - blockSize * Math.tan(rayAngle);
+        toCheckX = roundX ;
+        toCheckY = roundY ;
+        while (depth > 0){
+            mapX = Math.floor(toCheckX / blockSize)-1;
+            mapY = Math.floor(toCheckY / blockSize);
+            if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
+                if (map[currentLevel][mapY][mapX] > 0){
+                    depth = -1;
+                    blockType = map[currentLevel][mapY][mapX];
+                }
+                else{
+                    toCheckX += offsetX;
+                    toCheckY += offsetY;
+                    depth -= 1 ;
+                }}
+            else{
+                toCheckX = Infinity;
+                toCheckY = Infinity;
+                depth = -1}
+        }
+    }
+    if ( (rayAngle == PI/2 ) || (rayAngle == 1.5*PI) ){
+        toCheckX = Infinity;
+        toCheckY = Infinity;
+    }
+
+    verticalDistance = distanceToPlayer(toCheckX,toCheckY);
+    return [verticalDistance,blockType]
+}
+
 function computeStripData(){
-    distances = []
+    stripData = []
     for(let ray=0 ; ray<stripNumber ; ray++){
         /*
         Ray 0 is at angle : playerAngle + radsPerStrip*(stripNumber/2)
@@ -113,155 +252,16 @@ function computeStripData(){
         */
         let rayAngle = (playerAngle + radsPerStrip*(stripNumber/2 - ray) + 2*PI)%(2*PI);
 
-        let horizontalDistance = Infinity;
-        let verticalDistance = Infinity;
-        let vblockType = 0;
-        let hblockType = 0;
-
-        // I . Distance to closest Horizontal Edge
-        let roundY = Math.floor( playerPosition.y / blockSize) * blockSize;
-        let roundX = playerPosition.x + (-playerPosition.y+ roundY)/Math.tan(rayAngle)
-
-        // I (a) . Horizontal Edge - Looking UP
-        if ( (rayAngle > 0) && (rayAngle < PI) ){
-            let depth = 30;
-            let offsetY = blockSize;
-            let offsetX = blockSize / Math.tan(rayAngle);
-            let toCheckX = roundX + offsetX;
-            let toCheckY = roundY + offsetY;
-            while (depth > 0){
-
-                mapX = Math.floor(toCheckX / blockSize);
-                mapY = Math.floor(toCheckY / blockSize);
-                if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
-                if (map[currentLevel][mapY][mapX] > 0){
-                    depth = -1;
-                    hblockType = map[currentLevel][mapY][mapX];
-                }
-                else{
-
-                    toCheckX += offsetX;
-                    toCheckY += offsetY;
-                    depth -= 1;
-                }}
-                else{toCheckX = Infinity;
-                    toCheckY = Infinity;
-                depth = -1}
-            }
-
-            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
-            }
-        // I (b) . Horizontal Edge - Looking DOWN
-        if ( (rayAngle > PI) && (rayAngle < 2*PI) ){
-            let depth = 30;
-            let offsetY = - blockSize;
-            let offsetX = - blockSize / Math.tan(rayAngle);
-            let toCheckX = roundX ;
-            let toCheckY = roundY ;
-            while (depth > 0){
-
-                mapX = Math.floor(toCheckX / blockSize);
-                mapY = Math.floor(toCheckY / blockSize)-1;
-                if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
-                if (map[currentLevel][mapY][mapX] > 0){
-                    depth = -1;
-                    hblockType = map[currentLevel][mapY][mapX];
-                }
-                else{
-
-                    toCheckX += offsetX;
-                    toCheckY += offsetY;
-                    depth -=1 ;
-                }}
-                else{toCheckX = Infinity;
-                    toCheckY = Infinity;
-                depth = -1}
-            }
-
-
-            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
-        }
-        if ( (rayAngle == 0) || (rayAngle == PI) ){
-            toCheckX = Infinity;
-            toCheckY = Infinity;
-            horizontalDistance = distanceToPlayer(toCheckX,toCheckY);
-        }
-        
-        // II . Distance to closest Vertical Edge
-
-        roundX = Math.floor( playerPosition.x / blockSize) * blockSize;
-        roundY = playerPosition.y + (-playerPosition.x+ roundX)*Math.tan(rayAngle)
-        // II (a) . Vertical Edge - Looking RIGHT
-        if ( (rayAngle > 1.5*PI) || (rayAngle < PI/2) ){
-            let depth = 30;
-            let offsetX = blockSize;
-            let offsetY = blockSize * Math.tan(rayAngle);
-            let toCheckX = roundX + offsetX;
-            let toCheckY = roundY + offsetY;
-            while (depth > 0){
-                mapX = Math.floor(toCheckX  / blockSize);
-                mapY = Math.floor(toCheckY  / blockSize);
-                if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
-                if (map[currentLevel][mapY][mapX] > 0){
-                    depth = -1;
-                    vblockType = map[currentLevel][mapY][mapX];
-                }
-                else{
-                    toCheckX += offsetX;
-                    toCheckY += offsetY;
-                    depth -= 1;
-                }}
-                else{toCheckX = Infinity;
-                    toCheckY = Infinity;
-                depth = -1}
-            }
-
-            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
-            }
-        // II (b) . Vertical Edge - Looking LEFT
-        if ( (rayAngle < 1.5*PI) && (rayAngle > PI/2) ){
-            let depth = 30;
-            let offsetX = - blockSize;
-            let offsetY = - blockSize * Math.tan(rayAngle);
-            let toCheckX = roundX ;
-            let toCheckY = roundY ;
-            while (depth > 0){
-                mapX = Math.floor(toCheckX / blockSize)-1;
-                mapY = Math.floor(toCheckY / blockSize);
-                if ((mapX >=0) && (mapY>=0) && (mapX<map[currentLevel][0].length) && (mapY<map[currentLevel].length) ){
-                if (map[currentLevel][mapY][mapX] > 0){
-                    depth = -1;
-                    vblockType = map[currentLevel][mapY][mapX];
-                }
-                else{
-                    toCheckX += offsetX;
-                    toCheckY += offsetY;
-                    depth -= 1 ;
-                }}
-                else{toCheckX = Infinity;
-                    toCheckY = Infinity;
-                depth = -1}
-            }
-
-            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
-        }
-        if ( (rayAngle == PI/2 ) || (rayAngle == 1.5*PI) ){
-            toCheckX = Infinity;
-            toCheckY = Infinity;
-            
-            verticalDistance = distanceToPlayer(toCheckX,toCheckY);
-        }
-            
+        horizontalData = computeHorizontalStripData(rayAngle)
+        verticalData = computeVerticalStripData(rayAngle)
         fishCorrection = Math.cos( (playerAngle - rayAngle + 2*PI )%(2*PI) );
-        if (horizontalDistance < verticalDistance)
-        {
-        distances.push([horizontalDistance*fishCorrection,"H",hblockType]);}
+
+        if (horizontalData[0] < verticalData[0])
+            {stripData.push([horizontalData[0]*fishCorrection,"H",horizontalData[1]]);}
         else
-        {
-        distances.push([verticalDistance*fishCorrection,"V",vblockType]);
-        }
+            {stripData.push([verticalData[0]*fishCorrection,"V",verticalData[1]]);}
     }
-    return distances
+    return stripData
 }
 
 function generateStrips(){
@@ -514,8 +514,8 @@ document.addEventListener('keydown', function(event){
         }
     }
     if (["w","a","s","d","ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(event.key)){
-        stripData = computeStripData();
-        updateAllStrips(stripData);
+        SD = computeStripData();
+        updateAllStrips(SD);
     }
 } );
 
