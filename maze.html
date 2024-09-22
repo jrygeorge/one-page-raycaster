@@ -65,6 +65,11 @@
 <script>
 
 function changePlayerAngle(dir,control){
+    /*
+    dir is if the angle is to be increased or decreased
+    control is if we're using Mouse or Keyboard
+    as the amount moved is different for each
+    */
     playerAngle = (playerAngle + dir*playerAngleStepSize[control] + 2*PI)%(2*PI);
 }
 
@@ -83,6 +88,7 @@ function blockInPath(newX, newY){
 }
 
 function advanceLevel(){
+    // if this is the last level
     if (currentLevel+1==map.length){
         document.exitPointerLock();
         alert("Congrats ! You won !!");
@@ -150,8 +156,8 @@ function computeStripData(){
             let depth = 30;
             let offsetY = - blockSize;
             let offsetX = - blockSize / Math.tan(rayAngle);
-            let toCheckX = roundX ;//+ offsetX ;
-            let toCheckY = roundY ;//+ offsetY ;
+            let toCheckX = roundX ;
+            let toCheckY = roundY ;
             while (depth > 0){
 
                 mapX = Math.floor(toCheckX / blockSize);
@@ -217,8 +223,8 @@ function computeStripData(){
             let depth = 30;
             let offsetX = - blockSize;
             let offsetY = - blockSize * Math.tan(rayAngle);
-            let toCheckX = roundX ;//+ offsetX ;
-            let toCheckY = roundY ;//+ offsetY ;
+            let toCheckX = roundX ;
+            let toCheckY = roundY ;
             while (depth > 0){
                 mapX = Math.floor(toCheckX / blockSize)-1;
                 mapY = Math.floor(toCheckY / blockSize);
@@ -347,12 +353,12 @@ document.getElementById("strip0").style.width = (100/stripNumber)+"%"
 // PLAYER INFORMATION
 let playerStepSize = 4
 let playerAngleStepSize = {"key":PI/90, "mouse":PI/360}
+let playerPosition = {x:0,y:0}
+let playerAngle = 0
+
  // starting location for each map, [0,0] is top-left
 let playerStartingPositions = [[75,125],[75,75],[210,540],[225,75],[55,55]]
 let playerStartingAngles = [0,PI/2,15*PI/8,0,PI/4]
-
-let playerPosition = {x:playerStartingPositions[currentLevel][0], y:playerStartingPositions[currentLevel][1]}
-let playerAngle = playerStartingAngles[currentLevel]
 
 /*
 -1    = GOAL / EXIT
@@ -467,6 +473,13 @@ let map = [[
     ]
 ]
 
+// Throwing my own errors because I'm a professional
+if ((map.length != playerStartingAngles.length)||
+    (map.length != playerStartingPositions.length)||
+    (playerStartingAngles.length != playerStartingPositions.length)){
+        throw new Error("Map, playerStartingPositions, playerStartingAngles must have same length !!")
+    }
+
 
 document.addEventListener('keydown', function(event){
 
@@ -506,6 +519,9 @@ document.addEventListener('keydown', function(event){
 
 window.addEventListener('load', function(event){
     generateStrips();
+    playerPosition.x = playerStartingPositions[currentLevel][0];
+    playerPosition.y = playerStartingPositions[currentLevel][1];
+    playerAngle = playerStartingAngles[currentLevel]
     updateAllStrips(computeStripData());
     }
   );
